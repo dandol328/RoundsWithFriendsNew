@@ -9,6 +9,7 @@ using UnboundLib.Networking;
 using UnboundLib.GameModes;
 using Sonigon;
 using RWF.UI;
+using RWF;
 
 namespace RWF.GameModes
 {
@@ -136,6 +137,59 @@ namespace RWF.GameModes
             yield return this.SyncMethod(nameof(RWFGameMode.RPC_RequestSync), null, PhotonNetwork.LocalPlayer.ActorNumber);
         }
 
+        /// <summary>
+        /// Clears any pending sync-wait entries for a disconnected actor, preventing game loops from hanging.
+        /// Call this from OnPlayerLeftRoom for the leaving actor.
+        /// </summary>
+        public static void ClearPendingRequestsForActor(int actorNumber)
+        {
+            if (instance != null)
+            {
+                instance.ClearPendingRequests(actorNumber);
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the player's owning Photon client is still connected to the room.
+        /// </summary>
+        private static bool IsPlayerConnected(Player player)
+        {
+            if (PhotonNetwork.OfflineMode || PhotonNetwork.CurrentRoom == null) return true;
+            var additionalData = player.GetAdditionalData();
+            if (additionalData == null) return true;
+            int actorID = additionalData.character?.actorID ?? -1;
+            return actorID >= 0 && PhotonNetwork.CurrentRoom.Players.ContainsKey(actorID);
+        }
+
+        /// <summary>
+        /// Called on the master client when a Photon player disconnects during an active battle.
+        /// If only one team remains alive (excluding the disconnected player's characters), ends the round.
+        /// </summary>
+        public static void HandleBattleDisconnection(int disconnectedActorNumber)
+        {
+            if (instance == null || instance.isTransitioning) return;
+            if (PhotonNetwork.OfflineMode || !PhotonNetwork.IsMasterClient) return;
+            if (GameManager.instance == null || !GameManager.instance.battleOngoing) return;
+
+            // Count teams that are still alive, treating the disconnected actor's players as eliminated.
+            var aliveTeamIDs = PlayerManager.instance.players
+                .Where(p => !p.data.dead && (p.GetAdditionalData()?.character?.actorID ?? -1) != disconnectedActorNumber)
+                .Select(p => p.teamID)
+                .Distinct()
+                .ToArray();
+
+            if (aliveTeamIDs.Length <= 1)
+            {
+                NetworkingManager.RPC(
+                    typeof(RWFGameMode),
+                    nameof(RWFGameMode.RPCA_NextRound),
+                    aliveTeamIDs,
+                    instance.teamPoints,
+                    instance.teamRounds
+                );
+            }
+        }
+
         public virtual void PlayerJoined(Player player)
         {
             if (!this.teamPoints.ContainsKey(player.teamID)) { this.teamPoints.Add(player.teamID, 0); }
@@ -215,6 +269,9 @@ namespace RWF.GameModes
 
             foreach (Player player in pickOrder)
             {
+                // Skip card picking for players whose client has disconnected.
+                if (!RWFGameMode.IsPlayerConnected(player)) continue;
+
                 yield return this.WaitForSyncUp();
 
                 yield return GameModeManager.TriggerHook(GameModeHooks.HookPlayerPickStart);
@@ -278,6 +335,9 @@ namespace RWF.GameModes
             {
                 if (!winningTeamIDs.Contains(player.teamID))
                 {
+                    // Skip card picking for players whose client has disconnected.
+                    if (!RWFGameMode.IsPlayerConnected(player)) continue;
+
                     yield return this.WaitForSyncUp();
 
                     yield return GameModeManager.TriggerHook(GameModeHooks.HookPlayerPickStart);

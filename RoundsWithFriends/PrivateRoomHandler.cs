@@ -14,6 +14,7 @@ using UnboundLib.Networking;
 using UnityEngine;
 using UnityEngine.UI;
 using RWF.UI;
+using RWF.GameModes;
 using UnboundLib.Utils.UI;
 
 namespace RWF
@@ -528,6 +529,12 @@ namespace RWF
         {
             if (!this.IsOpen)
             {
+                // If a game is currently in progress, open the lobby for this client so the player
+                // can see it and choose a character for the next game when the current one ends.
+                if (GameManager.instance != null && GameManager.instance.isPlaying)
+                {
+                    this.Open();
+                }
                 return;
             }
 
@@ -617,6 +624,16 @@ namespace RWF
         override public void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
         {
             this.ClearPendingRequests(otherPlayer.ActorNumber);
+
+            // Unblock any RWFGameMode sync operations that were waiting on this actor.
+            RWFGameMode.ClearPendingRequestsForActor(otherPlayer.ActorNumber);
+
+            // When a player disconnects during an active battle, end the round if only one team survives.
+            if (PhotonNetwork.IsMasterClient && GameManager.instance != null && GameManager.instance.isPlaying)
+            {
+                RWFGameMode.HandleBattleDisconnection(otherPlayer.ActorNumber);
+            }
+
             base.OnPlayerLeftRoom(otherPlayer);
         }
         
