@@ -129,26 +129,38 @@ Download the [latest release](https://github.com/olavim/RoundsWithFriends/releas
      ~/.steam/steam/steamapps/common/ROUNDS/BepInEx/plugins/
    ```
 
-### Bassite OS
+### Bazzite OS
 
-1. **Install build dependencies** using the Bassite package manager:
+Bazzite is an immutable Fedora-based Linux gaming OS. Because the base system is read-only, build tools are installed inside a **Distrobox** container rather than on the host.
+
+1. **Create a Fedora Distrobox container** (if you don't already have one):
    ```bash
-   sudo bassite install dotnet-sdk git mono
+   distrobox create --name fedora-dev --image registry.fedoraproject.org/fedora:latest
+   distrobox enter fedora-dev
    ```
-   If the .NET SDK is not available in the Bassite repositories, download and install it manually from [dotnet.microsoft.com](https://dotnet.microsoft.com/download) and follow the Linux install instructions for your architecture.
 
-2. **Clone the repository:**
+2. **Inside the container, install build dependencies:**
+   ```bash
+   sudo dnf install -y dotnet-sdk-6.0 git mono-complete
+   ```
+   If the .NET SDK version you need is not in the Fedora repositories, download and install it manually from [dotnet.microsoft.com](https://dotnet.microsoft.com/download) and follow the Linux install instructions for your architecture.
+
+3. **Clone the repository** (inside the container):
    ```bash
    git clone https://github.com/dandol328/RoundsWithFriendsNew.git
    cd RoundsWithFriendsNew
    ```
 
-3. **Locate your ROUNDS install directory.** Steam games on Bassite OS are typically found at:
+4. **Locate your ROUNDS install directory.** Steam games on Bazzite are typically found at:
    ```
    ~/.steam/steam/steamapps/common/ROUNDS
    ```
+   or, if using the Flatpak version of Steam:
+   ```
+   ~/.var/app/com.valvesoftware.Steam/.steam/steam/steamapps/common/ROUNDS
+   ```
 
-4. **Override the ROUNDS path** by creating `RoundsWithFriends/RoundsWithFriends.csproj.user`:
+5. **Override the ROUNDS path** by creating `RoundsWithFriends/RoundsWithFriends.csproj.user`:
    ```xml
    <Project>
      <PropertyGroup>
@@ -156,15 +168,15 @@ Download the [latest release](https://github.com/olavim/RoundsWithFriends/releas
      </PropertyGroup>
    </Project>
    ```
-   Replace `YOUR_USERNAME` with your actual username.
+   Replace `YOUR_USERNAME` with your actual username and adjust the path if using the Flatpak Steam location above.
 
-5. **Build the project:**
+6. **Build the project:**
    ```bash
    dotnet build RoundsWithFriends.sln --configuration Release
    ```
    The compiled `RoundsWithFriends.dll` will be placed in `RoundsWithFriends/bin/Release/`.
 
-6. **Install the mod** by copying the output DLL to your BepInEx plugins directory:
+7. **Install the mod** by copying the output DLL to your BepInEx plugins directory:
    ```bash
    cp RoundsWithFriends/bin/Release/RoundsWithFriends.dll \
      ~/.steam/steam/steamapps/common/ROUNDS/BepInEx/plugins/
