@@ -48,3 +48,124 @@ Download the [latest release](https://github.com/Rounds-Modding/UnboundLib/relea
 #### 3. Download **RoundsWithFriends**.
 
 Download the [latest release](https://github.com/olavim/RoundsWithFriends/releases/latest) of **Rounds With Friends** and extract the downloaded zip file to the install directory of ROUNDS.
+
+## Compile Instructions
+
+> **Note:** Compiling requires the ROUNDS game to be installed, as the build references several managed DLLs from the game directory.
+
+### Prerequisites (all platforms)
+
+- [.NET SDK](https://dotnet.microsoft.com/download) (6.0 or later)
+- [Git](https://git-scm.com/)
+- ROUNDS installed via Steam
+
+### Windows
+
+1. **Install the .NET SDK** from [dotnet.microsoft.com](https://dotnet.microsoft.com/download).
+
+2. **Clone the repository:**
+   ```bat
+   git clone https://github.com/dandol328/RoundsWithFriendsNew.git
+   cd RoundsWithFriendsNew
+   ```
+
+3. **Set the ROUNDS install path** (if it differs from the default `C:\Program Files (x86)\Steam\steamapps\common\ROUNDS`):
+
+   Create or edit `RoundsWithFriends/RoundsWithFriends.csproj.user` with the following content, replacing the path as needed:
+   ```xml
+   <Project>
+     <PropertyGroup>
+       <RoundsFolder>C:\Program Files (x86)\Steam\steamapps\common\ROUNDS</RoundsFolder>
+     </PropertyGroup>
+   </Project>
+   ```
+
+4. **Build the project:**
+   ```bat
+   dotnet build RoundsWithFriends.sln --configuration Release
+   ```
+   The compiled `RoundsWithFriends.dll` will be placed in `RoundsWithFriends\bin\Release\`.
+
+   The post-build step will automatically run `publish.ps1` to package and copy the files to your ROUNDS install directory.
+
+### Debian/Ubuntu
+
+1. **Install build dependencies:**
+   ```bash
+   sudo apt update
+   sudo apt install -y dotnet-sdk-6.0 git mono-complete
+   ```
+
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/dandol328/RoundsWithFriendsNew.git
+   cd RoundsWithFriendsNew
+   ```
+
+3. **Locate your ROUNDS install directory.** On Linux, Steam games are typically found at:
+   ```
+   ~/.steam/steam/steamapps/common/ROUNDS
+   ```
+
+4. **Override the ROUNDS path** by creating `RoundsWithFriends/RoundsWithFriends.csproj.user`:
+   ```xml
+   <Project>
+     <PropertyGroup>
+       <RoundsFolder>/home/YOUR_USERNAME/.steam/steam/steamapps/common/ROUNDS</RoundsFolder>
+     </PropertyGroup>
+   </Project>
+   ```
+   Replace `YOUR_USERNAME` with your actual Linux username.
+
+5. **Build the project:**
+   ```bash
+   dotnet build RoundsWithFriends.sln --configuration Release
+   ```
+   The compiled `RoundsWithFriends.dll` will be placed in `RoundsWithFriends/bin/Release/`.
+
+6. **Install the mod** by copying the output DLL to your BepInEx plugins directory:
+   ```bash
+   cp RoundsWithFriends/bin/Release/RoundsWithFriends.dll \
+     ~/.steam/steam/steamapps/common/ROUNDS/BepInEx/plugins/
+   ```
+
+### Bassite OS
+
+1. **Install build dependencies** using the Bassite package manager:
+   ```bash
+   sudo bassite install dotnet-sdk git mono
+   ```
+   If the .NET SDK is not available in the Bassite repositories, download and install it manually from [dotnet.microsoft.com](https://dotnet.microsoft.com/download) and follow the Linux install instructions for your architecture.
+
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/dandol328/RoundsWithFriendsNew.git
+   cd RoundsWithFriendsNew
+   ```
+
+3. **Locate your ROUNDS install directory.** Steam games on Bassite OS are typically found at:
+   ```
+   ~/.steam/steam/steamapps/common/ROUNDS
+   ```
+
+4. **Override the ROUNDS path** by creating `RoundsWithFriends/RoundsWithFriends.csproj.user`:
+   ```xml
+   <Project>
+     <PropertyGroup>
+       <RoundsFolder>/home/YOUR_USERNAME/.steam/steam/steamapps/common/ROUNDS</RoundsFolder>
+     </PropertyGroup>
+   </Project>
+   ```
+   Replace `YOUR_USERNAME` with your actual username.
+
+5. **Build the project:**
+   ```bash
+   dotnet build RoundsWithFriends.sln --configuration Release
+   ```
+   The compiled `RoundsWithFriends.dll` will be placed in `RoundsWithFriends/bin/Release/`.
+
+6. **Install the mod** by copying the output DLL to your BepInEx plugins directory:
+   ```bash
+   cp RoundsWithFriends/bin/Release/RoundsWithFriends.dll \
+     ~/.steam/steam/steamapps/common/ROUNDS/BepInEx/plugins/
+   ```
